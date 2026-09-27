@@ -10,7 +10,8 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  - group: avd-test-vars 
+  - group: avd-foundation-vars
+  - group: avd-vm-vars
 
 stages:
   - stage: Plan
@@ -22,25 +23,30 @@ stages:
             parameters:
               workingDirectory: 'terraform/session_hosts'
               terraformCommand: |
-                # 1. Calculate the current number of VMs in the Host Pool
+                export TF_VAR_rg_name="$(rg_name)"
+                export TF_VAR_vnet_name="$(vnet_name)"
+                export TF_VAR_subnet_name="$(subnet_name)"
+                export TF_VAR_keyvault_name="$(keyvault_name)"
+                export TF_VAR_hostpool_name="$(hostpool_name)"
+                export TF_VAR_vm_prefix="$(vm_prefix)"
+                export TF_VAR_vm_size="$(vm_size)"
+                export TF_VAR_admin_username="$(admin_username)"
+                export TF_VAR_admin_password="$(admin_password)"
+
                 CURRENT_COUNT=$(az desktopvirtualization sessionhost list \
-                  --resource-group rg-avd-mtech-prod \
-                  --host-pool-name hp-avd-mtech-01 \
+                  --resource-group "$(rg_name)" \
+                  --host-pool-name "$(hostpool_name)" \
                   --query "length([])" -o tsv 2>/dev/null || echo "0")
                 
-                # 2. Add the requested VMs to the current count
                 TOTAL_VM_COUNT=$((CURRENT_COUNT + ${{ parameters.VMs_To_Add }}))
+                export TF_VAR_total_vm_count=$TOTAL_VM_COUNT
                 
                 echo "Current VMs: $CURRENT_COUNT"
                 echo "Adding: ${{ parameters.VMs_To_Add }}"
                 echo "Total Target VMs: $TOTAL_VM_COUNT"
 
-                # 3. Pass the absolute total to Terraform
                 terraform init
-                terraform plan \
-                  -var="total_vm_count=$TOTAL_VM_COUNT" \
-                  -var="admin_password=$(admin_password)" \
-                  -out=tfplan
+                terraform plan -out=tfplan
           
           - publish: '$(System.DefaultWorkingDirectory)/terraform/session_hosts/tfplan'
             artifact: session_hosts_plan
@@ -49,19 +55,16 @@ stages:
     dependsOn: Plan
     jobs:
       - deployment: TerraformApply
-        environment: 'AVD-Production' # Triggers the manual approval gate in Azure DevOps
+        environment: 'AVD-Production'
         strategy:
           runOnce:
             deploy:
               steps:
                 - download: current
                   artifact: session_hosts_plan
-                
                 - template: templates/terraform-install.yml
-                
                 - script: cp $(Pipeline.Workspace)/session_hosts_plan/tfplan $(System.DefaultWorkingDirectory)/terraform/session_hosts/tfplan
                   displayName: 'Stage Plan File'
-                
                 - template: templates/azure-auth.yml
                   parameters:
                     workingDirectory: 'terraform/session_hosts'
