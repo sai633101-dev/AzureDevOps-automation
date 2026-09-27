@@ -8,7 +8,6 @@ terraform {
     }
   }
 
-  # Notice the completely separate state file: vms.tfstate
   backend "azurerm" {
     resource_group_name  = "rg-avd"
     storage_account_name = "sttfstateavd7ya84"
@@ -20,5 +19,6 @@ terraform {
 
 provider "azurerm" {
   features {}
-  use_oidc = true
+  use_oidc                   = true
+  skip_provider_registration = true # <-- Add this line
 }
