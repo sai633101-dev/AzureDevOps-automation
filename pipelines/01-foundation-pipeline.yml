@@ -1,0 +1,45 @@
+trigger: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+  - stage: Plan
+    jobs:
+      - job: TerraformPlan
+        steps:
+          - template: templates/terraform-install.yml
+          - template: templates/azure-auth.yml
+            parameters:
+              workingDirectory: 'terraform/foundation'
+              terraformCommand: |
+                terraform init
+                terraform plan -out=tfplan
+          
+          - publish: '$(System.DefaultWorkingDirectory)/terraform/foundation/tfplan'
+            artifact: foundation_plan
+
+  - stage: Apply
+    dependsOn: Plan
+    jobs:
+      - deployment: TerraformApply
+        environment: 'AVD-Production' # Triggers the manual approval gate in Azure DevOps
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: foundation_plan
+                
+                - template: templates/terraform-install.yml
+                
+                # Copy downloaded plan back to the foundation directory
+                - script: cp $(Pipeline.Workspace)/foundation_plan/tfplan $(System.DefaultWorkingDirectory)/terraform/foundation/tfplan
+                  displayName: 'Stage Plan File'
+
+                - template: templates/azure-auth.yml
+                  parameters:
+                    workingDirectory: 'terraform/foundation'
+                    terraformCommand: |
+                      terraform init
+                      terraform apply -auto-approve tfplan
