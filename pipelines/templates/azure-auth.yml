@@ -1,0 +1,25 @@
+parameters:
+  - name: workingDirectory
+    type: string
+  - name: terraformCommand
+    type: string
+
+steps:
+  - task: AzureCLI@2
+    displayName: 'Execute Terraform'
+    inputs:
+      azureSubscription: 'azure-service-connection' # Your exact service connection name
+      addSpnToEnvironment: true
+      scriptType: 'bash'
+      workingDirectory: ${{ parameters.workingDirectory }}
+      inlineScript: |
+        set -e
+        # Map Azure ADO Service Connection credentials to Terraform ARM variables
+        export ARM_CLIENT_ID=$servicePrincipalId
+        export ARM_OIDC_TOKEN=$idToken
+        export ARM_USE_OIDC=true
+        export ARM_TENANT_ID=$tenantId
+        export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+
+        # Execute the commands passed into the template
+        ${{ parameters.terraformCommand }}
