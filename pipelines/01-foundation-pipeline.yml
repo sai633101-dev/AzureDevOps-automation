@@ -41,6 +41,7 @@ stages:
           runOnce:
             deploy:
               steps:
+                - checkout: self # <-- Add this line
                 - download: current
                   artifact: foundation_plan
                 - template: templates/terraform-install.yml
