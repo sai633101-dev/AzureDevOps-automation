@@ -3,6 +3,9 @@ trigger: none
 pool:
   vmImage: 'ubuntu-latest'
 
+variables:
+  - group: avd-foundation-vars
+
 stages:
   - stage: Plan
     jobs:
@@ -13,6 +16,16 @@ stages:
             parameters:
               workingDirectory: 'terraform/foundation'
               terraformCommand: |
+                export TF_VAR_location="$(location)"
+                export TF_VAR_rg_name="$(rg_name)"
+                export TF_VAR_vnet_name="$(vnet_name)"
+                export TF_VAR_subnet_name="$(subnet_name)"
+                export TF_VAR_keyvault_name="$(keyvault_name)"
+                export TF_VAR_workspace_name="$(workspace_name)"
+                export TF_VAR_hostpool_name="$(hostpool_name)"
+                export TF_VAR_workspace_name_avd="$(workspace_name_avd)"
+                export TF_VAR_appgroup_name="$(appgroup_name)"
+                
                 terraform init
                 terraform plan -out=tfplan
           
@@ -23,20 +36,16 @@ stages:
     dependsOn: Plan
     jobs:
       - deployment: TerraformApply
-        environment: 'AVD-Production' # Triggers the manual approval gate in Azure DevOps
+        environment: 'AVD-Production'
         strategy:
           runOnce:
             deploy:
               steps:
                 - download: current
                   artifact: foundation_plan
-                
                 - template: templates/terraform-install.yml
-                
-                # Copy downloaded plan back to the foundation directory
                 - script: cp $(Pipeline.Workspace)/foundation_plan/tfplan $(System.DefaultWorkingDirectory)/terraform/foundation/tfplan
                   displayName: 'Stage Plan File'
-
                 - template: templates/azure-auth.yml
                   parameters:
                     workingDirectory: 'terraform/foundation'
