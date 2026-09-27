@@ -1,28 +1,52 @@
-# Lookup References (Must match the Foundation defaults)
-variable "rg_name" { type = string, default = "rg-avd-mtech-prod" }
-variable "vnet_name" { type = string, default = "vnet-avd-prod" }
-variable "subnet_name" { type = string, default = "snet-avd-sessionhosts" }
-variable "keyvault_name" { type = string, default = "kv-avd-mtech-2026" }
-variable "hostpool_name" { type = string, default = "hp-avd-mtech-01" }
+# Foundation Reference Lookups
+variable "rg_name" {
+  type        = string
+  description = "Resource Group where foundation resources reside"
+}
 
-# Scale & Compute Parameters (Pipeline 2 will inject total_vm_count and admin_password dynamically)
-variable "total_vm_count" { 
-  type        = number 
-  description = "The absolute number of VMs to maintain, calculated by the pipeline."
+variable "vnet_name" {
+  type        = string
+  description = "Virtual Network Name"
 }
-variable "vm_prefix" { 
-  type    = string 
-  default = "avd-sh" 
+
+variable "subnet_name" {
+  type        = string
+  description = "Session Hosts Subnet Name"
 }
-variable "vm_size" { 
-  type    = string 
-  default = "Standard_B2s" # Cost-effective for Azure Free Tier
+
+variable "keyvault_name" {
+  type        = string
+  description = "Key Vault Name where token is stored"
 }
-variable "admin_username" { 
-  type    = string 
-  default = "avdadmin" 
+
+variable "hostpool_name" {
+  type        = string
+  description = "Target AVD Host Pool Name"
 }
-variable "admin_password" { 
-  type      = string 
-  sensitive = true 
+
+# Compute & Scaling Parameters
+variable "total_vm_count" {
+  type        = number
+  description = "Calculated total VM count passed by Pipeline 2"
+}
+
+variable "vm_prefix" {
+  type        = string
+  description = "Naming prefix for session host VMs"
+}
+
+variable "vm_size" {
+  type        = string
+  description = "Azure VM SKU"
+}
+
+variable "admin_username" {
+  type        = string
+  description = "Local admin username for session hosts"
+}
+
+variable "admin_password" {
+  type        = string
+  sensitive   = true
+  description = "Local admin password from avd-vm-vars secret"
 }
