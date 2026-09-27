@@ -1,0 +1,10 @@
+variable "resource_group_name" { type = string }
+variable "location" { type = string }
+variable "subnet_id" { type = string }
+variable "hostpool_name" { type = string }
+variable "registration_token" { type = string }
+variable "total_vm_count" { type = number }
+variable "vm_prefix" { type = string }
+variable "vm_size" { type = string }
+variable "admin_username" { type = string }
+variable "admin_password" { type = string }
