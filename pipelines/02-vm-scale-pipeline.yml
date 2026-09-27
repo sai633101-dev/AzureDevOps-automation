@@ -1,14 +1,9 @@
 trigger: none
 
-parameters:
-  - name: VMs_To_Add
-    type: number
-    default: 1
-    description: "How many new Session Hosts do you want to add?"
-
 pool:
   vmImage: 'ubuntu-latest'
 
+# Link BOTH library groups
 variables:
   - group: avd-foundation-vars
   - group: avd-vm-vars
@@ -23,6 +18,7 @@ stages:
             parameters:
               workingDirectory: 'terraform/session_hosts'
               terraformCommand: |
+                # 1. Export standard Terraform variables from the library
                 export TF_VAR_rg_name="$(rg_name)"
                 export TF_VAR_vnet_name="$(vnet_name)"
                 export TF_VAR_subnet_name="$(subnet_name)"
@@ -33,17 +29,28 @@ stages:
                 export TF_VAR_admin_username="$(admin_username)"
                 export TF_VAR_admin_password="$(admin_password)"
 
+                # 2. Query Azure to see exactly how many Session Hosts currently exist in the host pool
                 CURRENT_COUNT=$(az desktopvirtualization sessionhost list \
                   --resource-group "$(rg_name)" \
                   --host-pool-name "$(hostpool_name)" \
                   --query "length([])" -o tsv 2>/dev/null || echo "0")
                 
-                TOTAL_VM_COUNT=$((CURRENT_COUNT + ${{ parameters.VMs_To_Add }}))
+                # Ensure the variables resolve as valid integers for the math operation
+                CURRENT_COUNT=${CURRENT_COUNT:-0}
+                VMS_TO_ADD="$(vms_to_add)"
+                VMS_TO_ADD=${VMS_TO_ADD:-0}
+                
+                # 3. Add the library value to the current Azure environment count
+                TOTAL_VM_COUNT=$((CURRENT_COUNT + VMS_TO_ADD))
+                
+                # 4. Export the final calculated total to the Terraform module
                 export TF_VAR_total_vm_count=$TOTAL_VM_COUNT
                 
-                echo "Current VMs: $CURRENT_COUNT"
-                echo "Adding: ${{ parameters.VMs_To_Add }}"
-                echo "Total Target VMs: $TOTAL_VM_COUNT"
+                echo "========================================"
+                echo "Current VMs in Azure: $CURRENT_COUNT"
+                echo "VMs to add (from Library): $VMS_TO_ADD"
+                echo "New Target Total for Terraform: $TOTAL_VM_COUNT"
+                echo "========================================"
 
                 terraform init
                 terraform plan -out=tfplan
