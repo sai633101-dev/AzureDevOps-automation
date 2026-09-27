@@ -8,9 +8,10 @@ steps:
   - task: AzureCLI@2
     displayName: 'Execute Terraform'
     inputs:
-      azureSubscription: 'azure-service-connection' # Your exact service connection name
+      azureSubscription: 'azure-service-connection' # Ensure this matches your service connection
       addSpnToEnvironment: true
       scriptType: 'bash'
+      scriptLocation: 'inlineScript' # <-- Add this exact line
       workingDirectory: ${{ parameters.workingDirectory }}
       inlineScript: |
         set -e
