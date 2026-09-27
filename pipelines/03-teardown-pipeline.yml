@@ -4,7 +4,8 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  - group: avd-test-vars
+  - group: avd-foundation-vars
+  - group: avd-vm-vars
 
 stages:
   - stage: Destroy_VMs
@@ -17,10 +18,19 @@ stages:
             parameters:
               workingDirectory: 'terraform/session_hosts'
               terraformCommand: |
+                export TF_VAR_rg_name="$(rg_name)"
+                export TF_VAR_vnet_name="$(vnet_name)"
+                export TF_VAR_subnet_name="$(subnet_name)"
+                export TF_VAR_keyvault_name="$(keyvault_name)"
+                export TF_VAR_hostpool_name="$(hostpool_name)"
+                export TF_VAR_vm_prefix="$(vm_prefix)"
+                export TF_VAR_vm_size="$(vm_size)"
+                export TF_VAR_admin_username="$(admin_username)"
+                export TF_VAR_admin_password="$(admin_password)"
+                export TF_VAR_total_vm_count=0 
+
                 terraform init
-                terraform destroy -auto-approve \
-                  -var="total_vm_count=0" \
-                  -var="admin_password=$(admin_password)"
+                terraform destroy -auto-approve
 
   - stage: Destroy_Foundation
     dependsOn: Destroy_VMs
@@ -33,5 +43,15 @@ stages:
             parameters:
               workingDirectory: 'terraform/foundation'
               terraformCommand: |
+                export TF_VAR_location="$(location)"
+                export TF_VAR_rg_name="$(rg_name)"
+                export TF_VAR_vnet_name="$(vnet_name)"
+                export TF_VAR_subnet_name="$(subnet_name)"
+                export TF_VAR_keyvault_name="$(keyvault_name)"
+                export TF_VAR_workspace_name="$(workspace_name)"
+                export TF_VAR_hostpool_name="$(hostpool_name)"
+                export TF_VAR_workspace_name_avd="$(workspace_name_avd)"
+                export TF_VAR_appgroup_name="$(appgroup_name)"
+
                 terraform init
                 terraform destroy -auto-approve
