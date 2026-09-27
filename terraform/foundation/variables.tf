@@ -1,36 +1,44 @@
-variable "location" { 
-  type    = string 
-  default = "eastus" 
+variable "location" {
+  type        = string
+  description = "Target Azure Region"
 }
-variable "rg_name" { 
-  type    = string 
-  default = "rg-avd-mtech-prod" 
+
+variable "rg_name" {
+  type        = string
+  description = "Foundation Resource Group Name"
 }
-variable "vnet_name" { 
-  type    = string 
-  default = "vnet-avd-prod" 
+
+variable "vnet_name" {
+  type        = string
+  description = "Virtual Network Name"
 }
-variable "subnet_name" { 
-  type    = string 
-  default = "snet-avd-sessionhosts" 
+
+variable "subnet_name" {
+  type        = string
+  description = "Session Hosts Subnet Name"
 }
-variable "keyvault_name" { 
-  type    = string 
-  default = "kv-avd-mtech-2026" # Key vault names must be globally unique
+
+variable "keyvault_name" {
+  type        = string
+  description = "Key Vault Name for AVD Secrets"
 }
-variable "workspace_name" { 
-  type    = string 
-  default = "law-avd-mtech" 
+
+variable "workspace_name" {
+  type        = string
+  description = "Log Analytics Workspace Name"
 }
-variable "hostpool_name" { 
-  type    = string 
-  default = "hp-avd-mtech-01" 
+
+variable "hostpool_name" {
+  type        = string
+  description = "AVD Host Pool Name"
 }
-variable "workspace_name_avd" { 
-  type    = string 
-  default = "ws-avd-mtech-01" 
+
+variable "workspace_name_avd" {
+  type        = string
+  description = "AVD Workspace Name"
 }
-variable "appgroup_name" { 
-  type    = string 
-  default = "ag-avd-mtech-01" 
+
+variable "appgroup_name" {
+  type        = string
+  description = "AVD Application Group Name"
 }
