@@ -1,0 +1,37 @@
+trigger: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - group: avd-test-vars
+
+stages:
+  - stage: Destroy_VMs
+    jobs:
+      - job: DestroySessionHosts
+        displayName: 'Phase 1: Destroy Session Hosts'
+        steps:
+          - template: templates/terraform-install.yml
+          - template: templates/azure-auth.yml
+            parameters:
+              workingDirectory: 'terraform/session_hosts'
+              terraformCommand: |
+                terraform init
+                terraform destroy -auto-approve \
+                  -var="total_vm_count=0" \
+                  -var="admin_password=$(admin_password)"
+
+  - stage: Destroy_Foundation
+    dependsOn: Destroy_VMs
+    jobs:
+      - job: DestroyControlPlane
+        displayName: 'Phase 2: Destroy Core Infrastructure'
+        steps:
+          - template: templates/terraform-install.yml
+          - template: templates/azure-auth.yml
+            parameters:
+              workingDirectory: 'terraform/foundation'
+              terraformCommand: |
+                terraform init
+                terraform destroy -auto-approve
