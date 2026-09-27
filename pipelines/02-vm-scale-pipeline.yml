@@ -67,6 +67,7 @@ stages:
           runOnce:
             deploy:
               steps:
+                - checkout: self # <-- Add this line
                 - download: current
                   artifact: session_hosts_plan
                 - template: templates/terraform-install.yml
