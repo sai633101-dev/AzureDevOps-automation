@@ -29,11 +29,10 @@ stages:
                 export TF_VAR_admin_username="$(admin_username)"
                 export TF_VAR_admin_password="$(admin_password)"
 
-                # 2. Query Azure to see exactly how many Session Hosts currently exist in the host pool
-                CURRENT_COUNT=$(az desktopvirtualization sessionhost list \
+                # 2. Query Azure to see exactly how many Session Host VMs currently exist
+                CURRENT_COUNT=$(az vm list \
                   --resource-group "$(rg_name)" \
-                  --host-pool-name "$(hostpool_name)" \
-                  --query "length([])" -o tsv 2>/dev/null || echo "0")
+                  --query "length([?starts_with(name, '$(vm_prefix)')])" -o tsv)
                 
                 # Ensure the variables resolve as valid integers for the math operation
                 CURRENT_COUNT=${CURRENT_COUNT:-0}
@@ -67,7 +66,7 @@ stages:
           runOnce:
             deploy:
               steps:
-                - checkout: self # <-- Add this line
+                - checkout: self
                 - download: current
                   artifact: session_hosts_plan
                 - template: templates/terraform-install.yml
